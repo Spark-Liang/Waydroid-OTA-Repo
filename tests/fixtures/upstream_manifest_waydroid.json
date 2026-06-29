@@ -1,0 +1,24 @@
+{
+  "response": [
+    {
+      "datetime": 1735689600,
+      "filename": "system.img",
+      "id": "f8dc5cfdcda58e7de061e6870641a49c4b911cdba44c1b482fd9f9211b1987bb",
+      "romtype": "stable",
+      "size": 15,
+      "url": "https://ota.example.invalid/waydroid/system.img",
+      "version": "1.2.3",
+      "compression": "none"
+    },
+    {
+      "datetime": 1735689600,
+      "filename": "vendor.img",
+      "id": "c83013631a0a5cde4eff2fd787cf86476c567ace81a18aed411d123ec0ff39e3",
+      "romtype": "stable",
+      "size": 15,
+      "url": "https://ota.example.invalid/waydroid/vendor.img",
+      "version": "1.2.3",
+      "compression": "none"
+    }
+  ]
+}
