@@ -1,0 +1,93 @@
+[project]
+name = "waydroid-ota-repo"
+version = "0.1.0"
+description = "MVP converter for mirroring and rewriting Waydroid OTA manifests"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "httpx2[http2,brotli,zstd]>=0.1.9",
+    "pydantic>=2.11.0",
+    "pydantic-settings>=2.10.0",
+    "rich>=14.0.0",
+    "typer>=0.16.0",
+]
+
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.31.0",
+    "pytest>=8.4.0",
+    "ruff>=0.12.0",
+]
+
+[project.scripts]
+waydroid-ota-repo = "waydroid_ota_repo.cli:app"
+
+[tool.uv]
+package = true
+
+[tool.basedpyright]
+typeCheckingMode = "all"
+pythonVersion = "3.13"
+pythonPlatform = "All"
+include = ["src", "tests"]
+exclude = ["**/__pycache__", "**/.venv", "**/build", "**/dist"]
+reportUnusedCallResult = "warning"
+reportUnnecessaryTypeIgnoreComment = "error"
+reportUnusedVariable = "error"
+reportMissingParameterType = "error"
+reportPrivateUsage = "error"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "COM812",
+    "ISC001",
+    "D203",
+    "D213",
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D105",
+    "CPY001",
+    "FBT001",
+    "FBT002",
+    "PLR0913",
+    "TD002",
+    "TD003",
+    "FIX002",
+    "TRY003",
+    "EM101",
+]
+fixable = ["ALL"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "ARG", "PLR2004", "SLF001", "D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["typer.Argument", "typer.Option"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-config", "--strict-markers"]
+filterwarnings = ["error"]
