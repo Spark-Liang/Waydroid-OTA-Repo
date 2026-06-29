@@ -1,0 +1,8 @@
+{
+  "publisher": {
+    "kind": "nexus_raw",
+    "base_url": "https://nexus.example.invalid",
+    "repository": "waydroid-ota",
+    "directory_prefix": "android/waydroid"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "publisher": {
+    "kind": "github",
+    "owner": "Spark-Liang",
+    "repo": "Waydroid-OTA-Repo",
+    "branch": "main",
+    "pages_prefix": "ota",
+    "release_tag": "latest",
+    "use_releases_for_artifacts": true
+  }
+}

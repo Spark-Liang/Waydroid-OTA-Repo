@@ -1,0 +1,6 @@
+{
+  "publisher": {
+    "kind": "local",
+    "base_path": "dist"
+  }
+}
