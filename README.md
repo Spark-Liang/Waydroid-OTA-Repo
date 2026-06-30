@@ -1,13 +1,13 @@
 # Waydroid OTA Repo
 
-Waydroid OTA manifest 转换器 MVP。目标是把上游 manifest 解析、校验并重写为适合本地发布目录、GitHub Pages + Releases、以及后续 Nexus Raw Hosted 发布的静态仓库结构。
+Waydroid OTA manifest 转换器 MVP。目标是把上游 manifest 解析、校验并重写为适合本地发布目录、GitHub Pages + Releases、Nexus Raw Hosted、以及可直接作为 Nexus Raw Proxy Remote URL root 的静态仓库结构。
 
 ## MVP 范围
 
 - 解析上游 manifest fixture
 - 校验每个 artifact 的 `sha256` 与 `size`
 - 复用本地 cache，必要时通过 `httpx2` 下载
-- 将 manifest 中 artifact URL 重写为本地模式、GitHub 模式或 Nexus Raw Hosted URL 骨架
+- 将 manifest 中 artifact URL 重写为本地模式、GitHub 模式、Nexus Raw Hosted URL 骨架，或 raw-proxy-root 模式
 - 输出版本化 release 目录与 `latest` 指针
 - 兼容更接近 Waydroid/OTA API 的 `response[]` fixture 形状
 - 提供离线单元/集成测试
@@ -29,6 +29,11 @@ uv run waydroid-ota-repo tests/fixtures/upstream_manifest_waydroid.json \
   --cache-dir tests/fixtures/cache \
   --dist-dir .tmp/local-dist-waydroid \
   --publisher-config examples/nexus_raw.publisher.json
+
+uv run waydroid-ota-repo tests/fixtures/upstream_manifest_waydroid.json \
+  --cache-dir tests/fixtures/cache \
+  --dist-dir .tmp/local-dist-proxy-root \
+  --publisher-config examples/raw_proxy_root.publisher.json
 ```
 
 ## CLI
@@ -80,8 +85,34 @@ uv run waydroid-ota-repo MANIFEST_JSON \
 - `examples/local.publisher.json`
 - `examples/github.publisher.json`
 - `examples/nexus_raw.publisher.json`
+- `examples/raw_proxy_root.publisher.json`
 
 当前 Nexus 支持仅实现离线 URL 渲染骨架，不执行真实上传。
+
+## Raw Proxy Root 输出
+
+当 publisher 为 `raw_proxy_root` 时，除了保留现有 release/latest 元数据输出外，还会额外生成适合作为静态 HTTP 根目录的 Waydroid 兼容结构：
+
+- `dist/system/stable.json`
+- `dist/system/latest.json`
+- `dist/system/versions/<version>.json`
+- `dist/system/artifacts/*`
+- `dist/vendor/stable.json`
+- `dist/vendor/latest.json`
+- `dist/vendor/versions/<version>.json`
+- `dist/vendor/artifacts/*`
+
+这些 JSON 使用 Waydroid 风格 `response[]`：
+
+- `filename`
+- `id`
+- `romtype`
+- `url`
+- `version`
+- `size`
+- 以及原始 artifact 中可透传的字段
+
+因此可以直接把生成目录挂到静态 HTTP 服务下，再作为 Nexus Raw Proxy 的 Remote URL root。
 
 ## 多版本行为
 

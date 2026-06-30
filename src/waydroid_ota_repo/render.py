@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 from urllib.parse import quote
 
 from .models import (
@@ -7,6 +8,8 @@ from .models import (
     LocalPublisher,
     NexusRawPublisher,
     Publisher,
+    RawProxyChannelPlan,
+    RawProxyRootPublisher,
     ReleasePlan,
     UpstreamManifest,
 )
@@ -68,6 +71,9 @@ def render_artifact_url(*, artifact: Artifact, publisher: Publisher) -> str:
             return (
                 f"{normalized_base}/repository/{repository}/{prefix}/latest/artifacts/{quoted_name}"
             )
+        case RawProxyRootPublisher(base_url=base_url):
+            role = classify_artifact_role(artifact)
+            return f"{base_url.rstrip('/')}/{role}/artifacts/{quote(artifact.name)}"
 
 
 def build_release_plan(
@@ -102,6 +108,35 @@ def build_release_plan(
         versioned_manifest_url=versioned_manifest_url,
         latest_manifest_url=latest_manifest_url,
         release_index_url=release_index_url,
+    )
+
+
+def classify_artifact_role(artifact: Artifact) -> Literal["system", "vendor"]:
+    normalized_name = artifact.name.casefold()
+    if "vendor" in normalized_name:
+        return "vendor"
+    return "system"
+
+
+def build_raw_proxy_channel_plan(
+    *,
+    dist_dir: Path,
+    role: Literal["system", "vendor"],
+    channel: str,
+    version: str,
+    publisher: RawProxyRootPublisher,
+) -> RawProxyChannelPlan:
+    role_root = dist_dir / role
+    artifact_base_url = f"{publisher.base_url.rstrip('/')}/{role}/artifacts"
+    return RawProxyChannelPlan(
+        role=role,
+        channel=channel,
+        version=version,
+        latest_channel_manifest_path=role_root / f"{channel}.json",
+        latest_alias_manifest_path=role_root / "latest.json",
+        versioned_manifest_path=role_root / "versions" / f"{version}.json",
+        artifacts_dir=role_root / "artifacts",
+        artifact_base_url=artifact_base_url,
     )
 
 
@@ -147,6 +182,8 @@ def render_latest_manifest_url(*, publisher: Publisher) -> str:
                 directory_prefix=directory_prefix,
                 relative_path="manifest.json",
             )
+        case RawProxyRootPublisher(base_url=base_url):
+            return f"{base_url.rstrip('/')}/manifest.json"
 
 
 def render_manifest_url_for_version(*, publisher: Publisher, version: str) -> str:
@@ -173,6 +210,8 @@ def render_manifest_url_for_version(*, publisher: Publisher, version: str) -> st
                 directory_prefix=directory_prefix,
                 relative_path=f"releases/{quote(version)}/manifest.json",
             )
+        case RawProxyRootPublisher(base_url=base_url):
+            return f"{base_url.rstrip('/')}/releases/{quote(version)}/manifest.json"
 
 
 def render_release_index_url(*, publisher: Publisher) -> str:
@@ -193,6 +232,8 @@ def render_release_index_url(*, publisher: Publisher) -> str:
                 directory_prefix=directory_prefix,
                 relative_path="releases/index.json",
             )
+        case RawProxyRootPublisher(base_url=base_url):
+            return f"{base_url.rstrip('/')}/releases/index.json"
 
 
 def _render_nexus_url(
