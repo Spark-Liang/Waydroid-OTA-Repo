@@ -8,6 +8,10 @@ def load_manifest(path: Path) -> UpstreamManifest:
     return UpstreamManifest.model_validate_json(path.read_text(encoding="utf-8"))
 
 
+def load_manifest_text(payload: str) -> UpstreamManifest:
+    return UpstreamManifest.model_validate_json(payload)
+
+
 def dump_manifest(manifest: UpstreamManifest, path: Path) -> None:
     _ = path.parent.mkdir(parents=True, exist_ok=True)
     rendered = json.dumps(

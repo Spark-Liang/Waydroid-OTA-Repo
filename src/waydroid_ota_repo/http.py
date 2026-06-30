@@ -1,15 +1,16 @@
 import socket
 from collections.abc import Callable
+from typing import Final
 
 import httpx2
 
-_LIMITS = httpx2.Limits(
+_LIMITS: Final = httpx2.Limits(
     max_connections=200,
     max_keepalive_connections=40,
     keepalive_expiry=30.0,
 )
-_TIMEOUT = httpx2.Timeout(connect=5.0, read=30.0, write=10.0, pool=10.0)
-_SOCKET_OPTIONS: list[tuple[int, int, int]] = [
+_TIMEOUT: Final = httpx2.Timeout(connect=5.0, read=30.0, write=10.0, pool=10.0)
+_SOCKET_OPTIONS: Final[list[tuple[int, int, int]]] = [
     (socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 ]
 type ResponseHook = Callable[[httpx2.Response], None]
