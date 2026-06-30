@@ -18,6 +18,7 @@ from .models import (
     ReleaseMetadata,
     ReleasePlan,
     UpstreamManifest,
+    UpstreamPublishConfig,
 )
 from .render import (
     build_raw_proxy_channel_plan,
@@ -27,6 +28,7 @@ from .render import (
     rewrite_manifest,
 )
 from .storage import Downloader, HttpDownloader, ensure_artifact_cached
+from .upstream import fetch_upstream_manifest_set, publish_artifact_copy
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +44,34 @@ def convert(
     config: ConvertConfig, downloader: Downloader | None = None
 ) -> ConversionResult:
     manifest = load_manifest(config.upstream_manifest)
+    return convert_manifest(manifest=manifest, config=config, downloader=downloader)
+
+
+def publish_upstream(
+    config: UpstreamPublishConfig, downloader: Downloader | None = None
+) -> ConversionResult:
+    manifest = fetch_upstream_manifest_set(config.upstream).model_copy(
+        update={"channel": config.published_channel}
+    )
+    convert_config = ConvertConfig(
+        upstream_manifest=config.dist_dir / ".unused-upstream-manifest.json",
+        cache_dir=config.cache_dir,
+        dist_dir=config.dist_dir,
+        publisher=config.publisher,
+    )
+    return convert_manifest(
+        manifest=manifest,
+        config=convert_config,
+        downloader=downloader,
+    )
+
+
+def convert_manifest(
+    *,
+    manifest: UpstreamManifest,
+    config: ConvertConfig,
+    downloader: Downloader | None = None,
+) -> ConversionResult:
     active_downloader = downloader if downloader is not None else HttpDownloader()
     artifacts = tuple(
         ensure_artifact_cached(
@@ -91,9 +121,14 @@ def publish_artifacts(
     _ = versioned_target_dir.mkdir(parents=True, exist_ok=True)
     _ = latest_target_dir.mkdir(parents=True, exist_ok=True)
     for artifact_path in artifact_paths:
-        content = artifact_path.read_bytes()
-        _ = (versioned_target_dir / artifact_path.name).write_bytes(content)
-        _ = (latest_target_dir / artifact_path.name).write_bytes(content)
+        publish_artifact_copy(
+            artifact_path=artifact_path,
+            target_path=versioned_target_dir / artifact_path.name,
+        )
+        publish_artifact_copy(
+            artifact_path=artifact_path,
+            target_path=latest_target_dir / artifact_path.name,
+        )
 
 
 def update_release_index(*, release_plan: ReleasePlan) -> ReleaseIndex:
@@ -169,8 +204,9 @@ def _publish_raw_proxy_root_outputs(
         _ = channel_plan.artifacts_dir.mkdir(parents=True, exist_ok=True)
         for artifact in role_artifacts:
             source_path = artifact_path_by_name[artifact.name]
-            _ = (channel_plan.artifacts_dir / artifact.name).write_bytes(
-                source_path.read_bytes()
+            publish_artifact_copy(
+                artifact_path=source_path,
+                target_path=channel_plan.artifacts_dir / artifact.name,
             )
         payload = build_waydroid_response_payload(
             artifacts=role_artifacts,
