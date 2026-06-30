@@ -4,10 +4,19 @@ from typer.testing import CliRunner
 
 from waydroid_ota_repo.cli import app
 
+SYSTEM_FIXTURE_PATH = (
+    "tests/fixtures/cache/"
+    "f8dc5cfdcda58e7de061e6870641a49c4b911cdba44c1b482fd9f9211b1987bb/system.img"
+)
+VENDOR_FIXTURE_PATH = (
+    "tests/fixtures/cache/"
+    "c83013631a0a5cde4eff2fd787cf86476c567ace81a18aed411d123ec0ff39e3/vendor.img"
+)
+
 
 def _write_cached_artifacts(cache_dir: Path) -> None:
-    system_fixture = Path("tests/fixtures/cache/system.img")
-    vendor_fixture = Path("tests/fixtures/cache/vendor.img")
+    system_fixture = Path(SYSTEM_FIXTURE_PATH)
+    vendor_fixture = Path(VENDOR_FIXTURE_PATH)
     _ = (cache_dir / "system.img").write_bytes(system_fixture.read_bytes())
     _ = (cache_dir / "vendor.img").write_bytes(vendor_fixture.read_bytes())
 

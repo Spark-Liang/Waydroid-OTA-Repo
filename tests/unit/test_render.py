@@ -30,7 +30,7 @@ def test_rewrite_manifest_when_github_publisher_uses_release_urls() -> None:
 
     rewritten = rewrite_manifest(manifest, publisher)
 
-    assert rewritten.artifacts[1].url == (
+    assert str(rewritten.artifacts[1].url) == (
         "https://github.com/Spark-Liang/Waydroid-OTA-Repo/releases/download/latest/vendor.img"
     )
 
@@ -58,7 +58,7 @@ def test_rewrite_manifest_when_nexus_raw_publisher_renders_latest_urls() -> None
 
     rewritten = rewrite_manifest(manifest, publisher)
 
-    assert rewritten.artifacts[0].url == (
+    assert str(rewritten.artifacts[0].url) == (
         "https://nexus.example.invalid/repository/waydroid-ota/"
         "android/waydroid/latest/artifacts/system.img"
     )
