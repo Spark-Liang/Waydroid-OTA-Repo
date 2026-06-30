@@ -114,6 +114,29 @@ uv run waydroid-ota-repo MANIFEST_JSON \
 
 因此可以直接把生成目录挂到静态 HTTP 服务下，再作为 Nexus Raw Proxy 的 Remote URL root。
 
+## GitHub Pages 部署
+
+仓库内置 `.github/workflows/publish.yml`，使用 GitHub 官方 Pages 流程：
+
+- `actions/configure-pages`
+- `actions/upload-pages-artifact`
+- `actions/deploy-pages`
+
+该工作流会生成 `raw_proxy_root` 输出并把 `dist/` 部署到 GitHub Pages。
+
+默认 Pages 根 URL 形如：
+
+- `https://spark-liang.github.io/Waydroid-OTA-Repo`
+
+部署后，关键路径应为：
+
+- `https://spark-liang.github.io/Waydroid-OTA-Repo/system/stable.json`
+- `https://spark-liang.github.io/Waydroid-OTA-Repo/vendor/stable.json`
+- `https://spark-liang.github.io/Waydroid-OTA-Repo/system/artifacts/system.img`
+- `https://spark-liang.github.io/Waydroid-OTA-Repo/vendor/artifacts/vendor.img`
+
+如果仓库 Pages 之前未启用，需要在 GitHub 仓库设置中允许 GitHub Actions 作为 Pages source。
+
 ## 多版本行为
 
 - 重复对同一 `dist/` 转换不同版本时：
