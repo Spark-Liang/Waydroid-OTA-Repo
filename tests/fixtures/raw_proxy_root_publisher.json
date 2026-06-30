@@ -1,0 +1,6 @@
+{
+  "publisher": {
+    "kind": "raw_proxy_root",
+    "base_url": "http://127.0.0.1:8000"
+  }
+}

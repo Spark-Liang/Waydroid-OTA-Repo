@@ -110,3 +110,38 @@ def test_convert_flow_when_two_versions_are_converted_updates_latest_only(
     assert '"latest_version": "1.2.4"' in release_index_text
     assert '"version": "1.2.3"' in release_index_text
     assert '"version": "1.2.4"' in release_index_text
+
+
+def test_convert_flow_when_raw_proxy_root_publisher_emits_waydroid_layout(
+    tmp_path: Path,
+) -> None:
+    runner = CliRunner()
+    cache_dir = tmp_path / "cache"
+    dist_dir = tmp_path / "dist"
+    _ = cache_dir.mkdir()
+    _write_cached_artifacts(cache_dir)
+
+    result = runner.invoke(
+        app,
+        [
+            "tests/fixtures/upstream_manifest_waydroid.json",
+            "--cache-dir",
+            str(cache_dir),
+            "--dist-dir",
+            str(dist_dir),
+            "--publisher-config",
+            "tests/fixtures/raw_proxy_root_publisher.json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    system_json = (dist_dir / "system" / "stable.json").read_text(encoding="utf-8")
+    vendor_json = (dist_dir / "vendor" / "stable.json").read_text(encoding="utf-8")
+    assert '"response"' in system_json
+    assert '"filename": "system.img"' in system_json
+    assert '"romtype": "stable"' in system_json
+    assert '"url": "http://127.0.0.1:8000/system/artifacts/system.img"' in system_json
+    assert '"filename": "vendor.img"' in vendor_json
+    assert (dist_dir / "system" / "latest.json").exists()
+    assert (dist_dir / "system" / "versions" / "1.2.3.json").exists()
+    assert (dist_dir / "vendor" / "artifacts" / "vendor.img").exists()

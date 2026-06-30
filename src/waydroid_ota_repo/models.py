@@ -168,6 +168,13 @@ class NexusRawPublisher(BaseModel):
     directory_prefix: str = Field(default="waydroid-ota")
 
 
+class RawProxyRootPublisher(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+    kind: Literal["raw_proxy_root"] = "raw_proxy_root"
+    base_url: str = Field(min_length=1)
+
+
 class ReleaseMetadata(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
@@ -199,7 +206,22 @@ class ReleasePlan(BaseModel):
     release_index_url: str
 
 
-type Publisher = LocalPublisher | GitHubPublisher | NexusRawPublisher
+class RawProxyChannelPlan(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+    role: Literal["system", "vendor"]
+    channel: str
+    version: str
+    latest_channel_manifest_path: Path
+    latest_alias_manifest_path: Path
+    versioned_manifest_path: Path
+    artifacts_dir: Path
+    artifact_base_url: str
+
+
+type Publisher = (
+    LocalPublisher | GitHubPublisher | NexusRawPublisher | RawProxyRootPublisher
+)
 
 
 class ConvertConfig(BaseModel):

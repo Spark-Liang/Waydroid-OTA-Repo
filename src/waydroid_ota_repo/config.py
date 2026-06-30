@@ -11,11 +11,12 @@ from .models import (
     LocalPublisher,
     NexusRawPublisher,
     Publisher,
+    RawProxyRootPublisher,
 )
 
 GITHUB_PART_COUNT = 2
 GITHUB_PUBLISHER_FORMAT_ERROR = "github publisher must be in OWNER/REPO format"
-type PublisherMode = Literal["local", "github", "nexus_raw"]
+type PublisherMode = Literal["local", "github", "nexus_raw", "raw_proxy_root"]
 
 
 class PublisherConfigFile(BaseModel):
@@ -62,6 +63,8 @@ def parse_publisher(*, publisher_mode: PublisherMode, value: str) -> Publisher:
                 base_url=value,
                 repository="waydroid-ota",
             )
+        case "raw_proxy_root":
+            return RawProxyRootPublisher(base_url=value)
 
 
 def parse_publisher_mode(value: str) -> PublisherMode:
