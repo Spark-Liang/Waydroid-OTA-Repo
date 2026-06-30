@@ -12,6 +12,8 @@ from .models import (
     NexusRawPublisher,
     Publisher,
     RawProxyRootPublisher,
+    RemoteOtaSourceSet,
+    UpstreamPublishConfig,
 )
 
 GITHUB_PART_COUNT = 2
@@ -25,9 +27,40 @@ class PublisherConfigFile(BaseModel):
     publisher: Publisher
 
 
+class UpstreamPublishConfigFile(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+    upstream: RemoteOtaSourceSet
+    published_channel: str = "stable"
+
+
 def load_publisher_config(path: Path) -> Publisher:
     adapter = TypeAdapter(PublisherConfigFile)
     return adapter.validate_json(path.read_text(encoding="utf-8")).publisher
+
+
+def load_upstream_publish_sources(path: Path) -> RemoteOtaSourceSet:
+    adapter = TypeAdapter(UpstreamPublishConfigFile)
+    return adapter.validate_json(path.read_text(encoding="utf-8")).upstream
+
+
+def build_upstream_publish_config(
+    *,
+    source_config_path: Path,
+    cache_dir: Path,
+    dist_dir: Path,
+    publisher: Publisher,
+) -> UpstreamPublishConfig:
+    upstream_config = TypeAdapter(UpstreamPublishConfigFile).validate_json(
+        source_config_path.read_text(encoding="utf-8")
+    )
+    return UpstreamPublishConfig(
+        upstream=upstream_config.upstream,
+        cache_dir=cache_dir,
+        dist_dir=dist_dir,
+        publisher=publisher,
+        published_channel=upstream_config.published_channel,
+    )
 
 
 def build_config(

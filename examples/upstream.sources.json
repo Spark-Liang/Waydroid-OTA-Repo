@@ -1,0 +1,11 @@
+{
+  "upstream": {
+    "system": {
+      "manifest_url": "https://ota.waydro.id/system/lineage/waydroid_x86_64/VANILLA.json"
+    },
+    "vendor": {
+      "manifest_url": "https://ota.waydro.id/vendor/waydroid_x86_64/MAINLINE.json"
+    }
+  },
+  "published_channel": "stable"
+}

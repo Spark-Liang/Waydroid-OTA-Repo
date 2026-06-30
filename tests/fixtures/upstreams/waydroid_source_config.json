@@ -1,0 +1,11 @@
+{
+  "upstream": {
+    "system": {
+      "manifest_url": "https://example.invalid/system.json"
+    },
+    "vendor": {
+      "manifest_url": "https://example.invalid/vendor.json"
+    }
+  },
+  "published_channel": "stable"
+}

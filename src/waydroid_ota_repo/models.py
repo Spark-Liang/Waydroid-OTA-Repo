@@ -1,6 +1,7 @@
 from collections.abc import Mapping
 from pathlib import Path
 from typing import ClassVar, Literal
+from urllib.parse import urlparse
 
 from pydantic import (
     BaseModel,
@@ -72,6 +73,23 @@ def _normalize_manifest_mapping(
     return payload
 
 
+def _normalize_existing_manifest_sequence(
+    value: object,
+) -> CompatibilityResponse | None:
+    if not isinstance(value, list):
+        return None
+    normalized_items: CompatibilityResponse = []
+    normalized_item_list = STRING_OBJECT_MAPPING_LIST_ADAPTER.validate_python(value)
+    for normalized_item in normalized_item_list:
+        normalized_items.append(_normalize_artifact_mapping(normalized_item))
+    return normalized_items
+
+
+def _is_absolute_http_url(value: str) -> bool:
+    parsed = urlparse(value)
+    return parsed.scheme in {"http", "https"} and parsed.netloc != ""
+
+
 class Artifact(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow", frozen=True)
 
@@ -110,8 +128,21 @@ class UpstreamManifest(BaseModel):
         mapping = _string_key_mapping(value)
         if mapping is None:
             return value
+        existing_artifacts = mapping.get("artifacts")
+        if existing_artifacts is not None and not isinstance(existing_artifacts, list):
+            return value
 
         payload = _normalize_manifest_mapping(mapping)
+        normalized_existing_artifacts = _normalize_existing_manifest_sequence(
+            mapping.get("artifacts")
+        )
+        if normalized_existing_artifacts is not None:
+            payload["artifacts"] = normalized_existing_artifacts
+        normalized_existing_response = _normalize_existing_manifest_sequence(
+            mapping.get("response")
+        )
+        if normalized_existing_response is not None:
+            payload["response"] = normalized_existing_response
         response_items = payload.get("response")
         if "artifacts" not in payload and isinstance(response_items, list):
             payload["artifacts"] = response_items
@@ -175,6 +206,50 @@ class RawProxyRootPublisher(BaseModel):
     base_url: str = Field(min_length=1)
 
 
+class RemoteOtaManifestSource(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+    manifest_url: str
+
+    @model_validator(mode="after")
+    def validate_absolute_http_url(self) -> "RemoteOtaManifestSource":
+        if not _is_absolute_http_url(self.manifest_url):
+            msg = "manifest_url must be an absolute http(s) URL"
+            raise ValueError(msg)
+        return self
+
+
+class RemoteOtaSourceSet(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+    system: RemoteOtaManifestSource
+    vendor: RemoteOtaManifestSource
+
+
+class UpstreamPublishConfig(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+    cache_dir: Path
+    dist_dir: Path
+    publisher: "Publisher"
+    upstream: RemoteOtaSourceSet
+    published_channel: str = Field(default="stable", min_length=1)
+
+
+class RemoteArtifact(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+    name: str
+    url: str
+
+    @model_validator(mode="after")
+    def validate_absolute_http_url(self) -> "RemoteArtifact":
+        if not _is_absolute_http_url(self.url):
+            msg = f"artifact {self.name!r} url must be an absolute http(s) URL"
+            raise ValueError(msg)
+        return self
+
+
 class ReleaseMetadata(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
@@ -231,3 +306,6 @@ class ConvertConfig(BaseModel):
     cache_dir: Path
     dist_dir: Path
     publisher: Publisher
+
+
+_ = UpstreamPublishConfig.model_rebuild()
